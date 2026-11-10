@@ -4,6 +4,17 @@ Retro plošinovka s „.exe“ hororovou atmosférou, dělaná v **Pi Learn to C
 Každá postava má 4 snímky: Standing 1, Standing 2, Walking 1, Walking 2.
 Screenshoty z editoru jsou ve složce [`reference/characters/`](reference/characters/).
 
+## Dvě verze hry
+
+### Normální verze
+- **Hratelné postavy:** Boxy, Bob, Vicky, Al
+- **Nepřátelé:** Robo-Boxy, Dr. Maniac
+
+### .exe verze
+- **Hratelné postavy:** Al, Bob, Dr. Maniac a ještě jedna postava (zatím neupřesněno)
+- **Hlavní padouch:** Boxy.exe, který zabíjí všechny
+- **Ve hře potkáme:** Al (wounded), Al (crying), Mr. Darkness, Mr. Glitch, Vicky a .exe verze přátel
+
 ## Hrdinové (classic)
 
 | Postava | Popis | Reference |
