@@ -32,7 +32,7 @@ Projekt je ve složce [`game/`](game/).
 `#` tráva, `d` hlína, `~` voda, `P` start hráče, `M` Dr. Maniac, `.` vzduch.
 
 ### Sprity
-`tools/extract_sprites.py` vyřízne 16×16 sprity ze screenshotů v `reference/characters/`:
+`tools/extract_sprites.py` vyřízne sprity 13×13 (jako v Pi Learn to Code) ze screenshotů v `reference/characters/`:
 ```
 python3 tools/extract_sprites.py reference/characters/al-classic.png game/assets/sprites/al-classic
 ```
