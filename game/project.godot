@@ -26,3 +26,4 @@ accept={"deadzone":0.5,"events":[Object(InputEventKey,"resource_local_to_scene":
 [rendering]
 renderer/rendering_method="mobile"
 textures/canvas_textures/default_texture_filter=0
+textures/vram_compression/import_etc2_astc=true
