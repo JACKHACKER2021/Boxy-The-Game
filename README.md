@@ -29,7 +29,7 @@ Projekt je ve složce [`game/`](game/).
 
 ### Úprava úrovně
 Úroveň je zapsaná jako text v `game/scripts/main.gd` (proměnná `LEVEL`):
-`#` tráva, `d` hlína, `~` voda, `P` start hráče, `M` Dr. Maniac, `.` vzduch.
+`#` tráva, `d` hlína, `~` voda, `^` ostny, `=` pohyblivá plošina, `F` cíl, `P` start hráče, `M` Dr. Maniac, `.` vzduch.
 
 ### Sprity
 `tools/extract_sprites.py` vyřízne sprity 13×13 (jako v Pi Learn to Code) ze screenshotů v `reference/characters/`:

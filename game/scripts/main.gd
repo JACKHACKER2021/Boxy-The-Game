@@ -9,18 +9,18 @@ const SOLID := "#d"
 # . = vzduch, # = tráva, d = hlína, ~ = hladina, w = voda
 # P = start hráče, M = Dr. Maniac
 const LEVEL := [
-	"..........................................................................................",
-	"..........................................................................................",
-	"..........................................................................................",
-	"..........................................................................................",
-	"..........................................................................................",
-	"..............................###.................###.....................................",
-	".............................................................................####.........",
-	"....................####.......................M..................######..................",
-	"..P...........M..............................#######......M...............................",
-	"##########..##########....############.....##########..###########..###########.....######",
-	"dddddddddd..dddddddddd....dddddddddddd.....dddddddddd..ddddddddddd..ddddddddddd.....dddddd",
-	"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+	"................................................................................................................................................",
+	"................................................................................................................................................",
+	"................................................................................................................................................",
+	"................................................................................................................................................",
+	"................................................................................................................................................",
+	"................................................................................##...##...##....................................................",
+	".................................................###..............................................####..........................................",
+	"..............................................###ddd.....................................................###....................................",
+	"..P............................^.....^^....###dddddd..................M.......^^^^^^^^^^^^^^^^.....M.............=.......=................F.....",
+	"##############...##########################ddddddddd.....=........############################################....................##############",
+	"dddddddddddddd...ddddddddddddddddddddddddddddddddddd..............dddddddddddddddddddddddddddddddddddddddddddd....................dddddddddddddd",
+	"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
 ]
 
 func _ready() -> void:
@@ -52,6 +52,7 @@ func _ready() -> void:
 				p.set_script(load("res://scripts/player.gd"))
 				p.position = pos
 				p.name = "Player"
+				p.z_index = 10
 				add_child(p)
 			elif c == "M":
 				var e := Area2D.new()
@@ -59,7 +60,120 @@ func _ready() -> void:
 				e.position = pos
 				add_child(e)
 				e.setup("res://assets/sprites/dr-maniac-classic.png")
+				e.z_index = 5
+			elif c == "^":
+				_add_spikes(pos)
+			elif c == "=":
+				_add_moving_platform(pos)
+			elif c == "F":
+				_add_finish(pos)
 	_build_touch_controls()
+
+func _pixel_texture(rows: Array, colors: Dictionary) -> ImageTexture:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for y in rows.size():
+		for x in rows[y].length():
+			var ch: String = rows[y][x]
+			if colors.has(ch):
+				img.set_pixel(x, y, colors[ch])
+	return ImageTexture.create_from_image(img)
+
+func _add_spikes(pos: Vector2) -> void:
+	# ostny – dotek = návrat na start
+	var spr := Sprite2D.new()
+	spr.texture = _pixel_texture([
+		"", "", "", "", "", "", "",
+		"...w.......w....",
+		"...g.......g....",
+		"..wgg.....wgg...",
+		"..wgg.....wgg...",
+		".wwggg...wwggg..",
+		".wwggg...wwggg..",
+		"wwwgggg.wwwgggg.",
+		"wwwgggg.wwwgggg.",
+		"kkkkkkkkkkkkkkkk",
+	], {"w": Color8(230, 230, 230), "g": Color8(140, 140, 150), "k": Color8(40, 40, 50)})
+	spr.position = pos
+	spr.z_index = 4
+	add_child(spr)
+	var hit := Area2D.new()
+	var col := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(12, 7)
+	col.shape = r
+	col.position = Vector2(0, 4)
+	hit.add_child(col)
+	hit.position = pos
+	hit.body_entered.connect(func(b): if b.has_method("die"): b.die())
+	add_child(hit)
+
+func _add_moving_platform(pos: Vector2) -> void:
+	# plošina ze 3 dlaždic trávy, jezdí doprava a zpět
+	var body := AnimatableBody2D.new()
+	body.position = pos
+	body.z_index = 3
+	for i in 3:
+		var spr := Sprite2D.new()
+		spr.texture = Sprites.tile(TILES, T["#"])
+		spr.position = Vector2(i * 16, 0)
+		body.add_child(spr)
+	var col := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(48, 16)
+	col.shape = r
+	col.position = Vector2(16, 0)
+	col.one_way_collision = true
+	body.add_child(col)
+	add_child(body)
+	var tw := create_tween().set_loops().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tw.tween_property(body, "position:x", pos.x + 80, 2.0).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(body, "position:x", pos.x, 2.0).set_trans(Tween.TRANS_SINE)
+
+func _add_finish(pos: Vector2) -> void:
+	# cílová vlajka
+	var spr := Sprite2D.new()
+	spr.texture = _pixel_texture([
+		"..kooooooo......",
+		"..kooyyoooo.....",
+		"..koyooyooooo...",
+		"..koooyoooooooo.",
+		"..kooyoyooooo...",
+		"..kooooooooo....",
+		"..koooooo.......",
+		"..k.............",
+		"..k.............",
+		"..k.............",
+		"..k.............",
+		"..k.............",
+		"..k.............",
+		"..k.............",
+		".kkk............",
+		"kkkkk...........",
+	], {"k": Color8(60, 40, 30), "o": Color8(246, 146, 30), "y": Color8(255, 240, 80)})
+	spr.position = pos
+	add_child(spr)
+	var hit := Area2D.new()
+	var col := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(16, 32)
+	col.shape = r
+	hit.add_child(col)
+	hit.position = pos
+	hit.body_entered.connect(_on_finish)
+	add_child(hit)
+
+func _on_finish(body: Node) -> void:
+	if not body.has_method("die"):
+		return
+	body.set_physics_process(false)
+	var ui := CanvasLayer.new()
+	add_child(ui)
+	var l := Label.new()
+	l.text = "HILLWOOD ACT 1 – HOTOVO!"
+	l.position = Vector2(70, 70)
+	ui.add_child(l)
+	await get_tree().create_timer(3.0).timeout
+	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 func _add_tile(pos: Vector2, key: String) -> void:
 	var s := Sprite2D.new()

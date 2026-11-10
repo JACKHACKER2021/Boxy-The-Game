@@ -27,6 +27,7 @@ func _ready() -> void:
 	cam.limit_top = 0
 	cam.limit_bottom = 180
 	cam.limit_left = 0
+	cam.limit_right = get_parent().LEVEL[0].length() * 16
 	add_child(cam)
 
 func _physics_process(delta: float) -> void:
