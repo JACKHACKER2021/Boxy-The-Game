@@ -3,7 +3,7 @@ extends Node2D
 
 const TILES := "res://assets/tiles/hillwood.png"
 # indexy v hillwood.png
-const T := {"L": 0, "K": 1, "|": 2, "#": 5, "d": 6, "~": 7, "w": 8}
+const T := {"L": 0, "K": 1, "|": 2, "s": 3, "g": 4, "#": 5, "d": 6, "~": 7, "w": 8}
 const SOLID := "#d"
 
 # . = vzduch, # = tráva, d = hlína, ~ = hladina, w = voda
@@ -24,7 +24,7 @@ const LEVEL := [
 ]
 
 func _ready() -> void:
-	RenderingServer.set_default_clear_color(Color("6dc0cf"))
+	RenderingServer.set_default_clear_color(Color8(41, 178, 77))
 	_build_background()
 	var walls := StaticBody2D.new()
 	add_child(walls)
@@ -68,12 +68,16 @@ func _add_tile(pos: Vector2, key: String) -> void:
 	add_child(s)
 
 func _build_background() -> void:
-	# řada stromů nahoře jako v Hillwood Zone
+	# jako na mapě Hillwood Zone: 2 řady listí, kmeny přes oblohu, pod nimi zelená tráva
 	var width: int = LEVEL[0].length()
 	for x in width:
-		_add_tile(Vector2(x * 16 + 8, -4), "L")
-		if x % 2 == 0:
-			_add_tile(Vector2(x * 16 + 8, 12), "K")
+		var px := x * 16 + 8
+		_add_tile(Vector2(px, -4), "L")
+		_add_tile(Vector2(px, 12), "L")
+		_add_tile(Vector2(px, 28), "K" if x % 2 == 0 else "s")
+		_add_tile(Vector2(px, 44), "|" if x % 2 == 0 else "g")
+		for y in range(3, 11):
+			_add_tile(Vector2(px, y * 16 + 12), "g")
 
 func _build_touch_controls() -> void:
 	var ui := CanvasLayer.new()
