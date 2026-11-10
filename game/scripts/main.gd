@@ -14,10 +14,10 @@ const LEVEL := [
 	"................................................................................................................................................",
 	"................................................................................................................................................",
 	"................................................................................................................................................",
-	"................................................................................##...##...##....................................................",
+	".................................................C..............................##...##...##....................................................",
 	".................................................###..............................................####..........................................",
 	"..............................................###ddd.....................................................###....................................",
-	"..P............................^.....^^....###dddddd..................M.......^^^^^^^^^^^^^^^^.....M.............=.......=................F.....",
+	"..P............................^.....^^....###dddddd..................M.C.....^^^^^^^^^^^^^^^^.....M......C......=.......=................F.....",
 	"##############...##########################ddddddddd.....=........############################################....................##############",
 	"dddddddddddddd...ddddddddddddddddddddddddddddddddddd..............dddddddddddddddddddddddddddddddddddddddddddd....................dddddddddddddd",
 	"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
@@ -51,6 +51,9 @@ func _ready() -> void:
 				var p := CharacterBody2D.new()
 				p.set_script(load("res://scripts/player.gd"))
 				p.position = pos
+				var saved = SaveGame.load_checkpoint("hillwood1")
+				if saved != null:
+					p.position = saved
 				p.name = "Player"
 				p.z_index = 10
 				add_child(p)
@@ -65,6 +68,8 @@ func _ready() -> void:
 				_add_spikes(pos)
 			elif c == "=":
 				_add_moving_platform(pos)
+			elif c == "C":
+				_add_checkpoint(pos)
 			elif c == "F":
 				_add_finish(pos)
 	_build_touch_controls()
@@ -129,6 +134,58 @@ func _add_moving_platform(pos: Vector2) -> void:
 	tw.tween_property(body, "position:x", pos.x + 80, 2.0).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(body, "position:x", pos.x, 2.0).set_trans(Tween.TRANS_SINE)
 
+func _add_checkpoint(pos: Vector2) -> void:
+	# checkpoint: šedý sloupek, po dotyku se kulička rozsvítí a hra se uloží
+	var post := Sprite2D.new()
+	var rows := [
+		"......oooo......",
+		".....oooooo.....",
+		".....oooooo.....",
+		"......oooo......",
+		".......kk.......",
+		".......gg.......",
+		".......gg.......",
+		".......gg.......",
+		".......gg.......",
+		".......gg.......",
+		".......gg.......",
+		".......gg.......",
+		".......gg.......",
+		"......kggk......",
+		".....kkkkkk.....",
+		".....kkkkkk.....",
+	]
+	var off := _pixel_texture(rows, {"o": Color8(90, 90, 110), "k": Color8(40, 40, 50), "g": Color8(170, 170, 180)})
+	var on := _pixel_texture(rows, {"o": Color8(246, 146, 30), "k": Color8(40, 40, 50), "g": Color8(170, 170, 180)})
+	post.texture = off
+	post.position = pos
+	post.z_index = 2
+	add_child(post)
+	var hit := Area2D.new()
+	var col := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(12, 16)
+	col.shape = r
+	hit.add_child(col)
+	hit.position = pos
+	add_child(hit)
+	hit.body_entered.connect(func(b):
+		if not b.has_method("die") or post.texture == on:
+			return
+		post.texture = on
+		b.spawn = pos
+		SaveGame.save_checkpoint("hillwood1", pos)
+		var l := Label.new()
+		l.text = "ULOŽENO!"
+		l.add_theme_font_size_override("font_size", 8)
+		l.position = pos + Vector2(-18, -28)
+		l.z_index = 20
+		add_child(l)
+		var tw := create_tween()
+		tw.tween_property(l, "position:y", l.position.y - 12, 1.0)
+		tw.parallel().tween_property(l, "modulate:a", 0.0, 1.0)
+		tw.tween_callback(l.queue_free))
+
 func _add_finish(pos: Vector2) -> void:
 	# cílová vlajka
 	var spr := Sprite2D.new()
@@ -165,6 +222,7 @@ func _add_finish(pos: Vector2) -> void:
 func _on_finish(body: Node) -> void:
 	if not body.has_method("die"):
 		return
+	SaveGame.clear()
 	body.set_physics_process(false)
 	var ui := CanvasLayer.new()
 	add_child(ui)
